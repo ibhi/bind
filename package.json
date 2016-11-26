@@ -4,7 +4,7 @@
   "description": "Simple DOM - Model binding in Javascript",
   "main": "app.js",
   "scripts": {
-    "start": "webpack-dev-server",
+    "start": "webpack-dev-server --hot --inline",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "ibhi",

@@ -1,8 +1,14 @@
+var path = require('path');
+
 module.exports = {
   entry: './app/app.es6',
   output: {
+    // path: path.resolve(__dirname, 'public/'),
     fileName: 'bundle.js'
   },
+  // devServer: {
+  //   contentBase: 'public'
+  // },
   devtool: 'source-map',
   module: {
     preLoaders: [
