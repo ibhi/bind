@@ -5,6 +5,7 @@ function Bind(data, mapping) {
   const hasKey = (obj, key) => key in obj;
   const isString = str => str && typeof str === 'string';
   const isFunction = func => func && typeof func === 'function';
+  const isArray = array => Array.isArray(array);
   const getKey = (key) => {
     var intKey = parseInt(key);
     if (intKey.toString() === key) {
@@ -171,7 +172,14 @@ function Bind(data, mapping) {
         }
         if (value.transform) {
           // console.log('Transfor ++', newVal);
-          innerHtml = tryit(value.transform.bind({ safe: safe }))(newVal);
+          if(isArray(newVal)) {
+            innerHtml = '';
+            newVal.forEach((item) => {
+              innerHtml += tryit(value.transform.bind({ safe: safe }))(item);
+            });
+          } else {
+            innerHtml = tryit(value.transform.bind({ safe: safe }))(newVal);
+          }
         }
         elements = $(value.dom);
         if(innerHtml) {
@@ -214,9 +222,9 @@ let mapping = {
   'address.country.code': function(country) {
     // console.log('Callback: My country code is '+ country);
   },
-  'address.country.codes.0': function(code) {
-    console.log('Callback: My country code is '+ code);
-  },
+  // 'address.country.codes.0': function(code) {
+  //   console.log('Callback: My country code is '+ code);
+  // },
   'name.middleName': {
     dom: '#middle-name',
     transform: function(value) {
@@ -226,25 +234,33 @@ let mapping = {
     callback: function(value) {
       console.log('Callback for middlename ' + value + ' and first name is ' + this.firstName);
     }
+  },
+  'address.country.codes': {
+    dom: '#codes',
+    transform: function(code) {
+      return '<li>' + this.safe(code) + '</li>';
+    }
   }
 };
 
 let user = Bind(data, mapping);
 
 // user.address.street = '20';
-
+delete user.name.middleName;
 setTimeout(function() {
-  // user.firstName = 'Jane';
+  user.firstName = 'Jane';
   user.lastName = 'Smith';
   user.address.city = 'Mumbai';
   user.address.pinCode = 5000;
   user.address.country.code = 'UK';
-  user.address.country.codes[0] = 'EU';
+  user.address.country.codes = ['EU', 'USA'];
   user.name.middleName = 'Robert';
-  // user.age = 30;
-  // user.foo = {
-  //   bar: 'baz'
-  // };
+  user.age = 30;
+  user.foo = {
+    bar: 'baz'
+  };
+  
+
 }, 2000);
 
 // console.log(user.address.street, user.firstName);
