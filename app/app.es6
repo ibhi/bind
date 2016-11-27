@@ -123,6 +123,10 @@ function Bind(data, mapping) {
           update(propPath, newVal);
         }
         return true;
+      },
+      deleteProperty: (target, prop) => {
+        deleteProperty(prop);
+        return true;
       }
     };
     return new Proxy(obj, handler);
@@ -136,7 +140,7 @@ function Bind(data, mapping) {
     });
   }
   // Initial render
-  init();
+  // init();
   
   function update(prop, newVal) {
     const render = (elements, innerHtml) => {
@@ -191,6 +195,23 @@ function Bind(data, mapping) {
       
   }
 
+  const deleteProperty = (prop) => {
+    let propPath = relativePath(data, prop);
+    let elements;
+    let value = mapping[propPath];
+    if(hasKey(mapping, propPath)) {
+      if(isString(value)) {
+        elements = $(value);
+      } else if(isObject(value) && !isArray((value))) {
+        elements = $(value.dom);
+      }
+      if(elements) {
+        elements.forEach(element => {
+          element.parentElement.removeChild(element);
+        });
+      }
+    }
+  };
   return proxify(data);
 }
 
@@ -226,7 +247,7 @@ let mapping = {
   //   console.log('Callback: My country code is '+ code);
   // },
   'name.middleName': {
-    dom: '#middle-name',
+    dom: '.middle-name',
     transform: function(value) {
       console.log('Transform ', value, this);
       return '<div><b>' + this.safe(value) + '</b></div>';
@@ -246,7 +267,7 @@ let mapping = {
 let user = Bind(data, mapping);
 
 // user.address.street = '20';
-delete user.name.middleName;
+user.name.middleName = 'Robert';
 setTimeout(function() {
   user.firstName = 'Jane';
   user.lastName = 'Smith';
@@ -254,14 +275,16 @@ setTimeout(function() {
   user.address.pinCode = 5000;
   user.address.country.code = 'UK';
   user.address.country.codes = ['EU', 'USA'];
-  user.name.middleName = 'Robert';
+  
   user.age = 30;
   user.foo = {
     bar: 'baz'
   };
+  data.firstName = 'Jane';
+  delete user.name.middleName;
   
 
-}, 2000);
+}, 5000);
 
 // console.log(user.address.street, user.firstName);
 
