@@ -18,8 +18,8 @@ function Bind(data, mapping) {
     }
   };
 
-  const tryit = fn => {
-    return () => {
+  function tryit(fn) {
+    return function(val) {
       try {
         return fn.apply(this, arguments);
       } catch (e) {
@@ -138,38 +138,47 @@ function Bind(data, mapping) {
   init();
   
   function update(prop, newVal) {
-    
+    const render = (elements, innerHtml) => {
+      if(elements) {
+        elements.forEach((element) => {
+          element.innerHTML = innerHtml;
+        });
+      }
+    };
+    let elements = [];
     let value = mapping[prop];
     // if the set prop is of type string, then it is an query selector string
     if (isString(value)) {
-      let elements = $(value);
+      elements = $(value);
 
-      elements.forEach((element) => {
-        element.innerHTML = newVal;
-      });
+      render(elements, safe(newVal));
+      return;
 
     }
     // if the set prop is of type function, then it is an listener function and we have to call it
     if (isFunction(value)) {
       value.call(data, newVal);
+      return;
     }
 
     if (value && value.toString() === '[object Object]') {
-      if(value.callback) {
-        console.log('Callback new value ', newVal);
-        value.callback.call(data, newVal);
-      }
-
-      if (value.transform) {
-        tryit(value.transform.bind({ safe: safe }))();
-      }
+      let innerHtml = newVal;
 
       if (value.dom) {
-        let elements = $(value.dom);
-        elements.forEach((element) => {
-          element.innerHTML = newVal;
-        });
+        if(value.callback) {
+          // console.log('Callback new value ', newVal);
+          value.callback.call(data, newVal);
+        }
+        if (value.transform) {
+          // console.log('Transfor ++', newVal);
+          innerHtml = tryit(value.transform.bind({ safe: safe }))(newVal);
+        }
+        elements = $(value.dom);
+        if(innerHtml) {
+          render(elements, innerHtml);
+        }
       }
+      return;
     }
       
   }
@@ -211,10 +220,11 @@ let mapping = {
   'name.middleName': {
     dom: '#middle-name',
     transform: function(value) {
-      console.log('Transformed value ', this.safe(value));
+      console.log('Transform ', value, this);
+      return '<div><b>' + this.safe(value) + '</b></div>';
     },
     callback: function(value) {
-      console.log('Callback for middlename ', + value + 'and first name is ' + this.firstName);
+      console.log('Callback for middlename ' + value + ' and first name is ' + this.firstName);
     }
   }
 };
@@ -230,7 +240,7 @@ setTimeout(function() {
   user.address.pinCode = 5000;
   user.address.country.code = 'UK';
   user.address.country.codes[0] = 'EU';
-  user.name.middleName = 'middle';
+  user.name.middleName = 'Robert';
   // user.age = 30;
   // user.foo = {
   //   bar: 'baz'
